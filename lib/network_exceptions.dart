@@ -10,8 +10,7 @@ part 'network_exceptions.freezed.dart';
 abstract class NetworkExceptions with _$NetworkExceptions {
   const factory NetworkExceptions.requestCancelled() = RequestCancelled;
 
-  const factory NetworkExceptions.unauthorizedRequest(String reason) =
-      UnauthorizedRequest;
+  const factory NetworkExceptions.unauthorizedRequest(String reason) = UnauthorizedRequest;
 
   const factory NetworkExceptions.badRequest() = BadRequest;
 
@@ -25,8 +24,7 @@ abstract class NetworkExceptions with _$NetworkExceptions {
 
   const factory NetworkExceptions.sendTimeout() = SendTimeout;
 
-  const factory NetworkExceptions.unprocessableEntity(String reason) =
-      UnprocessableEntity;
+  const factory NetworkExceptions.unprocessableEntity(String reason) = UnprocessableEntity;
 
   const factory NetworkExceptions.conflict() = Conflict;
 
@@ -47,27 +45,22 @@ abstract class NetworkExceptions with _$NetworkExceptions {
   const factory NetworkExceptions.unexpectedError() = UnexpectedError;
 
   static NetworkExceptions handleResponse(Response? response) {
-    
-    //TODO : to be refactored
-    ErrorModel errorModel = ErrorModel.fromJson(response?.data[0]);
-    
+    List<ErrorModel> listOfErrors = List.from(response?.data).map((e) => ErrorModel.fromJson(e)).toList();
+    String allErrors = listOfErrors.map((e) => "${e.field} : ${e.message}  ").toString().replaceAll("(", "").replaceAll(")", "");
     int statusCode = response?.statusCode ?? 0;
-
     switch (statusCode) {
       case 400:
       case 401:
       case 403:
-        return NetworkExceptions.unauthorizedRequest(
-             "${errorModel.field} ${errorModel.message}");
+        return NetworkExceptions.unauthorizedRequest(allErrors);
       case 404:
-        return NetworkExceptions.notFound( "${errorModel.field} ${errorModel.message}");
+        return NetworkExceptions.notFound(allErrors);
       case 409:
         return const NetworkExceptions.conflict();
       case 408:
         return const NetworkExceptions.requestTimeout();
       case 422:
-        return NetworkExceptions.unprocessableEntity(
-            "${errorModel.field} ${errorModel.message}");
+        return NetworkExceptions.unprocessableEntity(allErrors);
       case 500:
         return const NetworkExceptions.internalServerError();
       case 503:
@@ -93,15 +86,13 @@ abstract class NetworkExceptions with _$NetworkExceptions {
               networkExceptions = const NetworkExceptions.requestTimeout();
               break;
             case DioErrorType.other:
-              networkExceptions =
-                  const NetworkExceptions.noInternetConnection();
+              networkExceptions = const NetworkExceptions.noInternetConnection();
               break;
             case DioErrorType.receiveTimeout:
               networkExceptions = const NetworkExceptions.sendTimeout();
               break;
             case DioErrorType.response:
-              networkExceptions =
-                  NetworkExceptions.handleResponse(error.response);
+              networkExceptions = NetworkExceptions.handleResponse(error.response);
               break;
             case DioErrorType.sendTimeout:
               networkExceptions = const NetworkExceptions.sendTimeout();
